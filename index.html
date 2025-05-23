@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D DNA Structure</title>
+    <style>
+        body { margin: 0; overflow: hidden; }
+        canvas { display: block; }
+    </style>
+</head>
+<body>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script >
+      
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(window.innerWidth, window.innerHeight);
+document.body.appendChild(renderer.domElement);
+
+const light = new THREE.AmbientLight(0xffffff, 0.5);
+scene.add(light);
+const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+directionalLight.position.set(1, 1, 1);
+scene.add(directionalLight);
+
+const radius = 1;
+const height = 5;
+const basePairs = 20; 
+const helixRadius = 0.3;
+
+const phosphateColor = 0x00ff00; 
+const sugarColor = 0xff0000;    
+const baseColors = {
+    'A': 0x0000ff, 
+    'T': 0xffff00, 
+    'C': 0xff00ff, 
+    'G': 0xffa500, 
+};
+
+const dnaGroup = new THREE.Group();
+scene.add(dnaGroup);
+
+for (let i = 0; i < basePairs; i++) {
+    const angle = (i / basePairs) * Math.PI * 4; // Helix twist
+
+    const x1 = Math.cos(angle) * radius;
+    const z1 = Math.sin(angle) * radius;
+    const x2 = Math.cos(angle + Math.PI) * radius;
+    const z2 = Math.sin(angle + Math.PI) * radius;
+    const y = (i / basePairs) * height - height / 2;
+
+    const phosphate1 = createSphere(x1, y, z1, 0.1, phosphateColor);
+    const phosphate2 = createSphere(x2, y, z2, 0.1, phosphateColor);
+    dnaGroup.add(phosphate1, phosphate2);
+
+    const sugar1 = createSphere(x1 * 0.8, y + 0.1, z1 * 0.8, 0.08, sugarColor);
+    const sugar2 = createSphere(x2 * 0.8, y + 0.1, z2 * 0.8, 0.08, sugarColor);
+    dnaGroup.add(sugar1, sugar2);
+
+    const baseType = Math.random() > 0.5 ? 'A' : 'C';
+    const base1 = createSphere((x1 + x2) / 2, y, (z1 + z2) / 2, 0.05, baseColors[baseType]);
+    const base2 = createSphere((x1 + x2) / 2, y, (z1 + z2) / 2, 0.05, baseColors[getComplementaryBase(baseType)]);
+    dnaGroup.add(base1, base2);
+}
+
+function createSphere(x, y, z, size, color) {
+    const geometry = new THREE.SphereGeometry(size, 16, 16);
+    const material = new THREE.MeshPhongMaterial({ color });
+    const sphere = new THREE.Mesh(geometry, material);
+    sphere.position.set(x, y, z);
+    return sphere;
+}
+
+function getComplementaryBase(base) {
+    switch (base) {
+        case 'A': return 'T';
+        case 'T': return 'A';
+        case 'C': return 'G';
+        case 'G': return 'C';
+    }
+}
+
+camera.position.z = 5;
+
+function animate() {
+    requestAnimationFrame(animate);
+    dnaGroup.rotation.y += 0.01;
+    renderer.render(scene, camera);
+}
+animate();
+
+window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+});
+    </script>
+</body>
+</html>
